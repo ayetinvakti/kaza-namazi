@@ -28,6 +28,7 @@
             flex-direction: column;
             min-height: 100vh;
             min-height: 100dvh;
+            overflow-x: hidden; /* Sayfanın yana kaymasını engeller */
         }
 
         header {
@@ -46,12 +47,18 @@
             gap: 8px;
         }
 
-        .menu-btn {
+        .back-btn {
             background: none;
             border: none;
             color: var(--text-color);
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
         }
 
         .container {
@@ -109,6 +116,7 @@
             font-size: 0.9rem;
             text-align: center;
             outline: none;
+            width: 100%;
         }
 
         .btn {
@@ -160,7 +168,7 @@
         }
 
         .debt-actions input {
-            width: 70px;
+            width: 60px;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 6px;
@@ -184,122 +192,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         .action-btn.minus {
             background-color: var(--border-color);
             color: var(--text-color);
         }
-
-        /* Yan Menü */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(3px);
-            z-index: 100;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .sidebar-overlay.active {
-            display: block;
-            opacity: 1;
-        }
-
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: -280px;
-            width: 280px;
-            height: 100%;
-            background-color: var(--card-bg);
-            z-index: 101;
-            display: flex;
-            flex-direction: column;
-            transition: left 0.3s ease;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
-        }
-
-        .sidebar.active {
-            left: 0;
-        }
-
-        .sidebar-header {
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .sidebar-header h2 {
-            font-size: 1rem;
-        }
-
-        .close-sidebar {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
-
-        .sidebar-menu {
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            overflow-y: auto;
-        }
-
-        .menu-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-radius: 8px;
-            color: var(--text-color);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: background 0.2s;
-        }
-
-        .menu-item:hover, .menu-item.active {
-            background-color: var(--border-color);
-            color: var(--primary-color);
-        }
     </style>
 </head>
 <body>
 
     <header>
-        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <!-- Ana sayfaya veya ana menüye dönen ok işareti (linkini kendi ana sayfa adresine göre düzenleyebilirsin) -->
+        <a href="https://ayetinvakti.github.io/" class="back-btn">⬅</a>
         <h1>⏳ Kaza Namazı Takibi</h1>
-        <div style="width: 24px;"></div>
+        <div style="width: 32px;"></div> <!-- Başlığı ortalamak için boşluk -->
     </header>
-
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h2>Ayetin Vakti</h2>
-            <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
-        </div>
-        <div class="sidebar-menu">
-            <!-- Diğer repolarına göre link uzantılarını güncelleyebilirsin (örn: https://ayetinvakti.github.io/namaz-vakitleri/) -->
-            <a href="https://ayetinvakti.github.io/namaz-vakitleri/" class="menu-item">🕌 Namaz Vakitleri</a>
-            <a href="https://ayetinvakti.github.io/kible-pusulasi/" class="menu-item">🧭 Kıble Pusulası</a>
-            <a href="https://ayetinvakti.github.io/Zikirmatik/" class="menu-item">📿 Zikirmatik</a>
-            <a href="https://ayetinvakti.github.io/kuran-oku/" class="menu-item">📖 Kur'an-ı Kerim Oku</a>
-            <a href="https://ayetinvakti.github.io/gunun-ayeti/" class="menu-item">✨ Günün Ayeti</a>
-            <a href="https://ayetinvakti.github.io/kaza-namazi/" class="menu-item active">⏳ Kaza Namazı Takibi</a>
-            <a href="https://ayetinvakti.github.io/ayar/" class="menu-item">⚙️ Ayarlar</a>
-        </div>
-    </div>
 
     <div class="container">
         <div class="card">
@@ -328,11 +237,6 @@
     </div>
 
     <script>
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('sidebarOverlay').classList.toggle('active');
-        }
-
         let debts = JSON.parse(localStorage.getItem('kazaBorclari')) || {
             sabah: 0,
             ogle: 0,
