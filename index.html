@@ -6,12 +6,23 @@
     <title>Ayetin Vakti - Kaza Namazı Takibi</title>
     <style>
         :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #0f172a;
+            --text-muted: #64748b;
+            --primary-color: #0d9488;
+            --border-color: #e2e8f0;
+            --btn-minus-bg: #e2e8f0;
+        }
+
+        [data-theme="dark"] {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
             --text-color: #f8fafc;
             --text-muted: #94a3b8;
             --primary-color: #14b8a6;
             --border-color: #334155;
+            --btn-minus-bg: #334155;
         }
 
         * {
@@ -19,6 +30,7 @@
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         body {
@@ -28,7 +40,7 @@
             flex-direction: column;
             min-height: 100vh;
             min-height: 100dvh;
-            overflow-x: hidden; /* Sayfanın yana kaymasını engeller */
+            overflow-x: hidden;
         }
 
         header {
@@ -47,18 +59,20 @@
             gap: 8px;
         }
 
-        .back-btn {
+        .back-btn, .theme-btn {
             background: none;
-            border: none;
+            border: 1px solid var(--border-color);
             color: var(--text-color);
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             cursor: pointer;
             text-decoration: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background-color: var(--card-bg);
         }
 
         .container {
@@ -80,13 +94,33 @@
             padding: 16px;
         }
 
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
         .card h2 {
             font-size: 1rem;
-            margin-bottom: 12px;
             color: var(--primary-color);
             display: flex;
             align-items: center;
             gap: 6px;
+        }
+
+        .reset-all-btn {
+            background: none;
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .reset-all-btn:active {
+            opacity: 0.7;
         }
 
         .calc-grid {
@@ -121,7 +155,7 @@
 
         .btn {
             background-color: var(--primary-color);
-            color: #0f172a;
+            color: #ffffff;
             border: none;
             padding: 10px;
             border-radius: 8px;
@@ -129,6 +163,10 @@
             font-size: 0.9rem;
             cursor: pointer;
             width: 100%;
+        }
+
+        [data-theme="dark"] .btn {
+            color: #0f172a;
         }
 
         .btn:active {
@@ -168,7 +206,7 @@
         }
 
         .debt-actions input {
-            width: 60px;
+            width: 65px;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 6px;
@@ -181,7 +219,7 @@
 
         .action-btn {
             background-color: var(--primary-color);
-            color: #0f172a;
+            color: #ffffff;
             border: none;
             width: 32px;
             height: 32px;
@@ -195,19 +233,22 @@
             flex-shrink: 0;
         }
 
+        [data-theme="dark"] .action-btn {
+            color: #0f172a;
+        }
+
         .action-btn.minus {
-            background-color: var(--border-color);
+            background-color: var(--btn-minus-bg);
             color: var(--text-color);
         }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
     <header>
-        <!-- Ana sayfaya veya ana menüye dönen ok işareti (linkini kendi ana sayfa adresine göre düzenleyebilirsin) -->
-        <a href="https://ayetinvakti.github.io/" class="back-btn">⬅</a>
+        <a href="https://ayetinvakti.github.io/" class="back-btn">←</a>
         <h1>⏳ Kaza Namazı Takibi</h1>
-        <div style="width: 32px;"></div> <!-- Başlığı ortalamak için boşluk -->
+        <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
     </header>
 
     <div class="container">
@@ -216,27 +257,49 @@
             <div class="calc-grid">
                 <div class="input-group">
                     <label>Yıl</label>
-                    <input type="number" id="calcYil" placeholder="0" min="0">
+                    <input type="number" id="calcYil" placeholder="0" min="0" inputmode="numeric" pattern="[0-9]*">
                 </div>
                 <div class="input-group">
                     <label>Ay</label>
-                    <input type="number" id="calcAy" placeholder="0" min="0">
+                    <input type="number" id="calcAy" placeholder="0" min="0" inputmode="numeric" pattern="[0-9]*">
                 </div>
                 <div class="input-group">
                     <label>Gün</label>
-                    <input type="number" id="calcGun" placeholder="0" min="0">
+                    <input type="number" id="calcGun" placeholder="0" min="0" inputmode="numeric" pattern="[0-9]*">
                 </div>
             </div>
             <button class="btn" onclick="hesaplaVeEkle()">Borçlara Ekle / Güncelle</button>
         </div>
 
         <div class="card">
-            <h2>📝 Kaza Borçlarım</h2>
+            <div class="card-header-row">
+                <h2>📝 Kaza Borçlarım</h2>
+                <button class="reset-all-btn" onclick="tumunuSifirla()">Sıfırla</button>
+            </div>
             <div class="debt-list" id="debtList"></div>
         </div>
     </div>
 
     <script>
+        // Tema Ayarları
+        const bodyEl = document.body;
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+        function setTheme(theme) {
+            bodyEl.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            themeToggleBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        function toggleTheme() {
+            const currentTheme = bodyEl.getAttribute('data-theme');
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        setTheme(savedTheme);
+
+        // Kaza Borçları Mantığı
         let debts = JSON.parse(localStorage.getItem('kazaBorclari')) || {
             sabah: 0,
             ogle: 0,
@@ -268,7 +331,7 @@
                         </div>
                         <div class="debt-actions">
                             <button class="action-btn minus" onclick="changeDebt('${key}', -1)">-</button>
-                            <input type="number" id="input-${key}" value="${debts[key]}" onchange="updateDirect('${key}', this.value)">
+                            <input type="number" id="input-${key}" value="${debts[key]}" onchange="updateDirect('${key}', this.value)" inputmode="numeric" pattern="[0-9]*">
                             <button class="action-btn" onclick="changeDebt('${key}', 1)">+</button>
                         </div>
                     </div>
@@ -310,6 +373,15 @@
 
             renderDebts();
             alert(toplamGun + " günlük kaza borcu listeye başarıyla eklendi kardeşim!");
+        }
+
+        function tumunuSifirla() {
+            if (confirm("Tüm kaza borçlarını sıfırlamak istediğinden emin misin kardeşim?")) {
+                for (let key in debts) {
+                    debts[key] = 0;
+                }
+                renderDebts();
+            }
         }
 
         renderDebts();
