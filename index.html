@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ayetin Vakti - Kaza Namazı Takibi</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-color: #14b8a6;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        header {
+            padding: 14px 16px;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+
+        .container {
+            flex: 1;
+            padding: 16px;
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding-bottom: 40px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .card h2 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-group label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .input-group input {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            text-align: center;
+            outline: none;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: #0f172a;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn:active {
+            opacity: 0.8;
+        }
+
+        .debt-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .debt-item {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .debt-info h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .debt-info span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .debt-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .debt-actions input {
+            width: 70px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px;
+            color: var(--text-color);
+            text-align: center;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .action-btn {
+            background-color: var(--primary-color);
+            color: #0f172a;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn.minus {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        /* Yan Menü */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(3px);
+            z-index: 100;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background-color: var(--card-bg);
+            z-index: 101;
+            display: flex;
+            flex-direction: column;
+            transition: left 0.3s ease;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1rem;
+        }
+
+        .close-sidebar {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .sidebar-menu {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background-color: var(--border-color);
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <h1>⏳ Kaza Namazı Takibi</h1>
+        <div style="width: 24px;"></div>
+    </header>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Ayetin Vakti</h2>
+            <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+        </div>
+        <div class="sidebar-menu">
+            <!-- Diğer repolarına göre link uzantılarını güncelleyebilirsin (örn: https://ayetinvakti.github.io/namaz-vakitleri/) -->
+            <a href="https://ayetinvakti.github.io/namaz-vakitleri/" class="menu-item">🕌 Namaz Vakitleri</a>
+            <a href="https://ayetinvakti.github.io/kible-pusulasi/" class="menu-item">🧭 Kıble Pusulası</a>
+            <a href="https://ayetinvakti.github.io/Zikirmatik/" class="menu-item">📿 Zikirmatik</a>
+            <a href="https://ayetinvakti.github.io/kuran-oku/" class="menu-item">📖 Kur'an-ı Kerim Oku</a>
+            <a href="https://ayetinvakti.github.io/gunun-ayeti/" class="menu-item">✨ Günün Ayeti</a>
+            <a href="https://ayetinvakti.github.io/kaza-namazi/" class="menu-item active">⏳ Kaza Namazı Takibi</a>
+            <a href="https://ayetinvakti.github.io/ayar/" class="menu-item">⚙️ Ayarlar</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>📊 Pratik Kaza Hesaplayıcı</h2>
+            <div class="calc-grid">
+                <div class="input-group">
+                    <label>Yıl</label>
+                    <input type="number" id="calcYil" placeholder="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label>Ay</label>
+                    <input type="number" id="calcAy" placeholder="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label>Gün</label>
+                    <input type="number" id="calcGun" placeholder="0" min="0">
+                </div>
+            </div>
+            <button class="btn" onclick="hesaplaVeEkle()">Borçlara Ekle / Güncelle</button>
+        </div>
+
+        <div class="card">
+            <h2>📝 Kaza Borçlarım</h2>
+            <div class="debt-list" id="debtList"></div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+
+        let debts = JSON.parse(localStorage.getItem('kazaBorclari')) || {
+            sabah: 0,
+            ogle: 0,
+            ikindi: 0,
+            aksam: 0,
+            yatsi: 0,
+            vitir: 0
+        };
+
+        const debtNames = {
+            sabah: "Sabah Namazı",
+            ogle: "Öğle Namazı",
+            ikindi: "İkindi Namazı",
+            aksam: "Akşam Namazı",
+            yatsi: "Yatsı Namazı",
+            vitir: "Vitir Namazı"
+        };
+
+        function renderDebts() {
+            const listContainer = document.getElementById('debtList');
+            listContainer.innerHTML = '';
+
+            for (let key in debts) {
+                listContainer.innerHTML += `
+                    <div class="debt-item">
+                        <div class="debt-info">
+                            <h3>${debtNames[key]}</h3>
+                            <span>Kalan Borç: ${debts[key]} vakit</span>
+                        </div>
+                        <div class="debt-actions">
+                            <button class="action-btn minus" onclick="changeDebt('${key}', -1)">-</button>
+                            <input type="number" id="input-${key}" value="${debts[key]}" onchange="updateDirect('${key}', this.value)">
+                            <button class="action-btn" onclick="changeDebt('${key}', 1)">+</button>
+                        </div>
+                    </div>
+                `;
+            }
+            localStorage.setItem('kazaBorclari', JSON.stringify(debts));
+        }
+
+        function changeDebt(key, amount) {
+            debts[key] = Math.max(0, debts[key] + amount);
+            renderDebts();
+        }
+
+        function updateDirect(key, value) {
+            let val = parseInt(value);
+            debts[key] = isNaN(val) || val < 0 ? 0 : val;
+            renderDebts();
+        }
+
+        function hesaplaVeEkle() {
+            let yil = parseInt(document.getElementById('calcYil').value) || 0;
+            let ay = parseInt(document.getElementById('calcAy').value) || 0;
+            let gun = parseInt(document.getElementById('calcGun').value) || 0;
+
+            let toplamGun = (yil * 365) + (ay * 30) + gun;
+
+            if (toplamGun <= 0) {
+                alert("Lütfen geçerli bir süre girin kardeşim!");
+                return;
+            }
+
+            for (let key in debts) {
+                debts[key] += toplamGun;
+            }
+
+            document.getElementById('calcYil').value = '';
+            document.getElementById('calcAy').value = '';
+            document.getElementById('calcGun').value = '';
+
+            renderDebts();
+            alert(toplamGun + " günlük kaza borcu listeye başarıyla eklendi kardeşim!");
+        }
+
+        renderDebts();
+    </script>
+</body>
+</html>
