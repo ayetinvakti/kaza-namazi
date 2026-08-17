@@ -1,11 +1,46 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <script>
+        // Tema ve Özel Renk Paleti Kontrolü (Sayfa yüklenmeden önce çalışır, titremeyi önler)
+        const savedTheme = localStorage.getItem('theme');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (savedTheme === 'light' || (!savedTheme && !systemPrefersDark)) {
+            document.documentElement.classList.add('light-mode');
+        }
+
+        // Ayarlardan kaydedilen özel renkleri hemen uygula
+        const savedAccent = localStorage.getItem('custom_accent');
+        const savedBg = localStorage.getItem('custom_bg');
+        const savedText = localStorage.getItem('custom_text');
+
+        if (savedAccent) document.documentElement.style.setProperty('--primary-color', savedAccent);
+        if (savedBg) {
+            document.documentElement.style.setProperty('--bg-color', savedBg);
+            document.documentElement.style.setProperty('--card-bg', savedBg);
+        }
+        if (savedText) document.documentElement.style.setProperty('--text-color', savedText);
+    </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ayetin Vakti - Kaza Namazı Takibi</title>
+    <title data-i18n="page_title">Ayetin Vakti - Kaza Namazı Takibi</title>
     <style>
         :root {
+            --bg-color: #0b1120;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-color: #10b981;
+            --border-color: #334155;
+            --btn-minus-bg: #334155;
+        }
+
+        html.light-mode {
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
             --text-color: #0f172a;
@@ -13,16 +48,6 @@
             --primary-color: #0d9488;
             --border-color: #e2e8f0;
             --btn-minus-bg: #e2e8f0;
-        }
-
-        [data-theme="dark"] {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary-color: #14b8a6;
-            --border-color: #334155;
-            --btn-minus-bg: #334155;
         }
 
         * {
@@ -57,6 +82,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            color: var(--primary-color);
         }
 
         .back-btn, .theme-btn {
@@ -165,7 +191,7 @@
             width: 100%;
         }
 
-        [data-theme="dark"] .btn {
+        html:not(.light-mode) .btn {
             color: #0f172a;
         }
 
@@ -233,7 +259,7 @@
             flex-shrink: 0;
         }
 
-        [data-theme="dark"] .action-btn {
+        html:not(.light-mode) .action-btn {
             color: #0f172a;
         }
 
@@ -243,61 +269,142 @@
         }
     </style>
 </head>
-<body data-theme="dark">
+<body>
 
     <header>
-        <a href="https://ayetinvakti.github.io/" class="back-btn">←</a>
-        <h1>⏳ Kaza Namazı Takibi</h1>
-        <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
+        <a href="https://ayetinvakti.github.io/" class="back-btn" aria-label="Geri">←</a>
+        <h1 data-i18n="header_title">⏳ Kaza Namazı Takibi</h1>
+        <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Tema Değiştir">🌙</button>
     </header>
 
     <div class="container">
         <div class="card">
-            <h2>📊 Pratik Kaza Hesaplayıcı</h2>
+            <h2 data-i18n="calc_header">📊 Pratik Kaza Hesaplayıcı</h2>
             <div class="calc-grid">
                 <div class="input-group">
-                    <label>Yıl</label>
+                    <label data-i18n="label_yil">Yıl</label>
                     <input type="number" id="calcYil" placeholder="0" min="0" inputmode="numeric" pattern="[0-9]*">
                 </div>
                 <div class="input-group">
-                    <label>Ay</label>
+                    <label data-i18n="label_ay">Ay</label>
                     <input type="number" id="calcAy" placeholder="0" min="0" inputmode="numeric" pattern="[0-9]*">
                 </div>
                 <div class="input-group">
-                    <label>Gün</label>
+                    <label data-i18n="label_gun">Gün</label>
                     <input type="number" id="calcGun" placeholder="0" min="0" inputmode="numeric" pattern="[0-9]*">
                 </div>
             </div>
-            <button class="btn" onclick="hesaplaVeEkle()">Borçlara Ekle / Güncelle</button>
+            <button class="btn" onclick="hesaplaVeEkle()" data-i18n="btn_ekle">Borçlara Ekle / Güncelle</button>
         </div>
 
         <div class="card">
             <div class="card-header-row">
-                <h2>📝 Kaza Borçlarım</h2>
-                <button class="reset-all-btn" onclick="tumunuSifirla()">Sıfırla</button>
+                <h2 data-i18n="debts_header">📝 Kaza Borçlarım</h2>
+                <button class="reset-all-btn" onclick="tumunuSifirla()" data-i18n="btn_reset">Sıfırla</button>
             </div>
             <div class="debt-list" id="debtList"></div>
         </div>
     </div>
 
     <script>
+        // Dil Sözlüğü
+        const translations = {
+            tr: {
+                page_title: "Ayetin Vakti - Kaza Namazı Takibi",
+                header_title: "⏳ Kaza Namazı Takibi",
+                calc_header: "📊 Pratik Kaza Hesaplayıcı",
+                label_yil: "Yıl",
+                label_ay: "Ay",
+                label_gun: "Gün",
+                btn_ekle: "Borçlara Ekle / Güncelle",
+                debts_header: "📝 Kaza Borçlarım",
+                btn_reset: "Sıfırla",
+                sabah: "Sabah Namazı",
+                ogle: "Öğle Namazı",
+                ikindi: "İkindi Namazı",
+                aksam: "Akşam Namazı",
+                yatsi: "Yatsı Namazı",
+                vitir: "Vitir Namazı",
+                kalan_borc: "Kalan Borç: ",
+                vakit: " vakit",
+                alert_gecersiz: "Lütfen geçerli bir süre girin kardeşim!",
+                alert_eklendi: " günlük kaza borcu listeye başarıyla eklendi kardeşim!",
+                confirm_sifirla: "Tüm kaza borçlarını sıfırlamak istediğinden emin misin kardeşim?"
+            },
+            en: {
+                page_title: "Ayetin Vakti - Qada Prayer Tracker",
+                header_title: "⏳ Qada Prayer Tracker",
+                calc_header: "📊 Quick Qada Calculator",
+                label_yil: "Year",
+                label_ay: "Month",
+                label_gun: "Day",
+                btn_ekle: "Add / Update Debts",
+                debts_header: "📝 My Qada Debts",
+                btn_reset: "Reset",
+                sabah: "Fajr Prayer",
+                ogle: "Dhuhr Prayer",
+                ikindi: "Asr Prayer",
+                aksam: "Maghrib Prayer",
+                yatsi: "Isha Prayer",
+                vitir: "Witr Prayer",
+                kalan_borc: "Remaining Debt: ",
+                vakit: " prayers",
+                alert_gecersiz: "Please enter a valid duration, my friend!",
+                alert_eklendi: " days of qada debt successfully added to the list!",
+                confirm_sifirla: "Are you sure you want to reset all qada debts, my friend?"
+            },
+            ar: {
+                page_title: "آية الوقت - تتبع الصلوات الفوائت",
+                header_title: "⏳ تتبع الصلوات الفوائت",
+                calc_header: "📊 حاسبة الفوائت السريعة",
+                label_yil: "سنة",
+                label_ay: "شهر",
+                label_gun: "يوم",
+                btn_ekle: "إضافة / تحديث الديون",
+                debts_header: "📝 ديوني من الصلوات",
+                btn_reset: "إعادة تعيين",
+                sabah: "صلاة الفجر",
+                ogle: "صلاة الظهر",
+                ikindi: "صلاة العصر",
+                aksam: "صلاة المغرب",
+                yatsi: "صلاة العشاء",
+                vitir: "صلاة الوتر",
+                kalan_borc: "الدين المتبقي: ",
+                vakit: " صلاة",
+                alert_gecersiz: "الرجاء إدخال مدة صحيحة يا أخي!",
+                alert_eklendi: " أيام من قضاء الصلاة أضيفت بنجاح للقائمة يا أخي!",
+                confirm_sifirla: "هل أنت متأكد أنك تريد إعادة تعيين جميع ديون الصلوات يا أخي؟"
+            }
+        };
+
+        const currentLang = localStorage.getItem('user_lang') || 'tr';
+
         // Tema Ayarları
-        const bodyEl = document.body;
         const themeToggleBtn = document.getElementById('themeToggleBtn');
 
-        function setTheme(theme) {
-            bodyEl.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-            themeToggleBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
+        function updateThemeButton(isLight) {
+            themeToggleBtn.textContent = isLight ? '☀️' : '🌙';
+        }
+
+        function setTheme(isLight) {
+            if (isLight) {
+                document.documentElement.classList.add('light-mode');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.remove('light-mode');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateThemeButton(isLight);
         }
 
         function toggleTheme() {
-            const currentTheme = bodyEl.getAttribute('data-theme');
-            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+            const isLight = document.documentElement.classList.contains('light-mode');
+            setTheme(!isLight);
         }
 
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        setTheme(savedTheme);
+        // İlk yükleme tema durumu
+        const isLightInitial = document.documentElement.classList.contains('light-mode');
+        updateThemeButton(isLightInitial);
 
         // Kaza Borçları Mantığı
         let debts = JSON.parse(localStorage.getItem('kazaBorclari')) || {
@@ -309,25 +416,21 @@
             vitir: 0
         };
 
-        const debtNames = {
-            sabah: "Sabah Namazı",
-            ogle: "Öğle Namazı",
-            ikindi: "İkindi Namazı",
-            aksam: "Akşam Namazı",
-            yatsi: "Yatsı Namazı",
-            vitir: "Vitir Namazı"
-        };
+        const debtKeys = ['sabah', 'ogle', 'ikindi', 'aksam', 'yatsi', 'vitir'];
 
         function renderDebts() {
             const listContainer = document.getElementById('debtList');
             listContainer.innerHTML = '';
 
-            for (let key in debts) {
+            const t = translations[currentLang] || translations['tr'];
+
+            debtKeys.forEach(key => {
+                let name = t[key] || key;
                 listContainer.innerHTML += `
                     <div class="debt-item">
                         <div class="debt-info">
-                            <h3>${debtNames[key]}</h3>
-                            <span>Kalan Borç: ${debts[key]} vakit</span>
+                            <h3>${name}</h3>
+                            <span>${t.kalan_borc}${debts[key]}${t.vakit}</span>
                         </div>
                         <div class="debt-actions">
                             <button class="action-btn minus" onclick="changeDebt('${key}', -1)">-</button>
@@ -336,7 +439,7 @@
                         </div>
                     </div>
                 `;
-            }
+            });
             localStorage.setItem('kazaBorclari', JSON.stringify(debts));
         }
 
@@ -357,30 +460,51 @@
             let gun = parseInt(document.getElementById('calcGun').value) || 0;
 
             let toplamGun = (yil * 365) + (ay * 30) + gun;
+            const t = translations[currentLang] || translations['tr'];
 
             if (toplamGun <= 0) {
-                alert("Lütfen geçerli bir süre girin kardeşim!");
+                alert(t.alert_gecersiz);
                 return;
             }
 
-            for (let key in debts) {
+            debtKeys.forEach(key => {
                 debts[key] += toplamGun;
-            }
+            });
 
             document.getElementById('calcYil').value = '';
             document.getElementById('calcAy').value = '';
             document.getElementById('calcGun').value = '';
 
             renderDebts();
-            alert(toplamGun + " günlük kaza borcu listeye başarıyla eklendi kardeşim!");
+            alert(toplamGun + t.alert_eklendi);
         }
 
         function tumunuSifirla() {
-            if (confirm("Tüm kaza borçlarını sıfırlamak istediğinden emin misin kardeşim?")) {
-                for (let key in debts) {
+            const t = translations[currentLang] || translations['tr'];
+            if (confirm(t.confirm_sifirla)) {
+                debtKeys.forEach(key => {
                     debts[key] = 0;
-                }
+                });
                 renderDebts();
+            }
+        }
+
+        // Sayfa Metinlerini Dile Göre Düzenleme
+        if (translations[currentLang]) {
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    if (element.tagName === 'TITLE') {
+                        document.title = translations[currentLang][key];
+                    } else {
+                        element.textContent = translations[currentLang][key];
+                    }
+                }
+            });
+            if (currentLang === 'ar') {
+                document.documentElement.setAttribute('dir', 'rtl');
+            } else {
+                document.documentElement.setAttribute('dir', 'ltr');
             }
         }
 
