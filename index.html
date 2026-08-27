@@ -11,6 +11,7 @@
         const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         if (savedTheme === 'light' || (!savedTheme && !systemPrefersDark)) {
             document.documentElement.classList.add('light-mode');
+            document.body && document.body.classList.add('light-mode');
         }
 
         // Ayarlardan kaydedilen özel renkleri hemen uygula
@@ -40,7 +41,7 @@
             --btn-minus-bg: #334155;
         }
 
-        html.light-mode {
+        html.light-mode, body.light-mode {
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
             --text-color: #0f172a;
@@ -191,7 +192,7 @@
             width: 100%;
         }
 
-        html:not(.light-mode) .btn {
+        html:not(.light-mode) body:not(.light-mode) .btn {
             color: #0f172a;
         }
 
@@ -259,7 +260,7 @@
             flex-shrink: 0;
         }
 
-        html:not(.light-mode) .action-btn {
+        html:not(.light-mode) body:not(.light-mode) .action-btn {
             color: #0f172a;
         }
 
@@ -383,15 +384,19 @@
         const themeToggleBtn = document.getElementById('themeToggleBtn');
 
         function updateThemeButton(isLight) {
-            themeToggleBtn.textContent = isLight ? '☀️' : '🌙';
+            if (themeToggleBtn) {
+                themeToggleBtn.textContent = isLight ? '☀️' : '🌙';
+            }
         }
 
         function setTheme(isLight) {
             if (isLight) {
                 document.documentElement.classList.add('light-mode');
+                document.body.classList.add('light-mode');
                 localStorage.setItem('theme', 'light');
             } else {
                 document.documentElement.classList.remove('light-mode');
+                document.body.classList.remove('light-mode');
                 localStorage.setItem('theme', 'dark');
             }
             updateThemeButton(isLight);
@@ -403,7 +408,17 @@
         }
 
         // İlk yükleme tema durumu
-        const isLightInitial = document.documentElement.classList.contains('light-mode');
+        const savedThemeInitial = localStorage.getItem('theme');
+        const systemPrefersDarkInitial = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isLightInitial = (savedThemeInitial === 'light') || (!savedThemeInitial && !systemPrefersDarkInitial);
+        
+        if (isLightInitial) {
+            document.documentElement.classList.add('light-mode');
+            document.body.classList.add('light-mode');
+        } else {
+            document.documentElement.classList.remove('light-mode');
+            document.body.classList.remove('light-mode');
+        }
         updateThemeButton(isLightInitial);
 
         // Kaza Borçları Mantığı
@@ -420,6 +435,7 @@
 
         function renderDebts() {
             const listContainer = document.getElementById('debtList');
+            if (!listContainer) return;
             listContainer.innerHTML = '';
 
             const t = translations[currentLang] || translations['tr'];
