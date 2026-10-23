@@ -6,12 +6,11 @@
     <meta http-equiv="Expires" content="0">
 
     <script>
-        // Tema ve Özel Renk Paleti Kontrolü (Sayfa yüklenmeden önce çalışır, titremeyi önler)
+        // Tema, Özel Renk Paleti ve Dil Kontrolü (Sayfa yüklenmeden önce çalışır, titremeyi önler)
         const savedTheme = localStorage.getItem('theme');
         const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         if (savedTheme === 'light' || (!savedTheme && !systemPrefersDark)) {
             document.documentElement.classList.add('light-mode');
-            document.body && document.body.classList.add('light-mode');
         }
 
         // Ayarlardan kaydedilen özel renkleri hemen uygula
@@ -25,10 +24,16 @@
             document.documentElement.style.setProperty('--card-bg', savedBg);
         }
         if (savedText) document.documentElement.style.setProperty('--text-color', savedText);
+
+        // Dil ve yön (RTL) ayarı sayfa çizilmeden önce yapılır
+        const earlyLang = localStorage.getItem('user_lang') || 'tr';
+        document.documentElement.setAttribute('lang', earlyLang);
+        document.documentElement.setAttribute('dir', earlyLang === 'ar' ? 'rtl' : 'ltr');
     </script>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- DÜZELTME: Yakınlaştırmayı engelleyen maximum-scale / user-scalable=no kaldırıldı -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="page_title">Ayetin Vakti - Kaza Namazı Takibi</title>
     <style>
         :root {
@@ -41,7 +46,7 @@
             --btn-minus-bg: #334155;
         }
 
-        html.light-mode, body.light-mode {
+        html.light-mode {
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
             --text-color: #0f172a;
@@ -192,12 +197,43 @@
             width: 100%;
         }
 
-        html:not(.light-mode) body:not(.light-mode) .btn {
+        html:not(.light-mode) .btn {
             color: #0f172a;
         }
 
         .btn:active {
             opacity: 0.8;
+        }
+
+        .btn.secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted) !important;
+            font-weight: 600;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border: 1px dashed var(--primary-color);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .total-row .total-value {
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+
+        .bulk-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
         }
 
         .debt-list {
@@ -260,13 +296,13 @@
             flex-shrink: 0;
         }
 
-        html:not(.light-mode) body:not(.light-mode) .action-btn {
+        html:not(.light-mode) .action-btn {
             color: #0f172a;
         }
 
         .action-btn.minus {
             background-color: var(--btn-minus-bg);
-            color: var(--text-color);
+            color: var(--text-color) !important;
         }
     </style>
 </head>
@@ -283,19 +319,19 @@
             <h2 data-i18n="calc_header">📊 Pratik Kaza Hesaplayıcı</h2>
             <div class="calc-grid">
                 <div class="input-group">
-                    <label data-i18n="label_yil">Yıl</label>
+                    <label for="calcYil" data-i18n="label_yil">Yıl</label>
                     <input type="number" id="calcYil" placeholder="0" min="0" inputmode="numeric" pattern="[0-9]*">
                 </div>
                 <div class="input-group">
-                    <label data-i18n="label_ay">Ay</label>
+                    <label for="calcAy" data-i18n="label_ay">Ay</label>
                     <input type="number" id="calcAy" placeholder="0" min="0" inputmode="numeric" pattern="[0-9]*">
                 </div>
                 <div class="input-group">
-                    <label data-i18n="label_gun">Gün</label>
+                    <label for="calcGun" data-i18n="label_gun">Gün</label>
                     <input type="number" id="calcGun" placeholder="0" min="0" inputmode="numeric" pattern="[0-9]*">
                 </div>
             </div>
-            <button class="btn" onclick="hesaplaVeEkle()" data-i18n="btn_ekle">Borçlara Ekle / Güncelle</button>
+            <button class="btn" onclick="hesaplaVeEkle()" data-i18n="btn_ekle">Borçlara Ekle</button>
         </div>
 
         <div class="card">
@@ -303,7 +339,15 @@
                 <h2 data-i18n="debts_header">📝 Kaza Borçlarım</h2>
                 <button class="reset-all-btn" onclick="tumunuSifirla()" data-i18n="btn_reset">Sıfırla</button>
             </div>
+            <div class="total-row">
+                <span data-i18n="total_label">Toplam Kalan Borç:</span>
+                <span class="total-value" id="totalValue">0</span>
+            </div>
             <div class="debt-list" id="debtList"></div>
+            <div class="bulk-actions">
+                <button class="btn" onclick="birGunKildim()" data-i18n="btn_gun_kildim">✅ Bir Günlük Kazayı Kıldım (−1 gün)</button>
+                <button class="btn secondary" id="undoBtn" onclick="geriAl()" style="display: none;" data-i18n="btn_undo">↩️ Son İşlemi Geri Al</button>
+            </div>
         </div>
     </div>
 
@@ -317,9 +361,14 @@
                 label_yil: "Yıl",
                 label_ay: "Ay",
                 label_gun: "Gün",
-                btn_ekle: "Borçlara Ekle / Güncelle",
+                btn_ekle: "Borçlara Ekle",
                 debts_header: "📝 Kaza Borçlarım",
                 btn_reset: "Sıfırla",
+                total_label: "Toplam Kalan Borç:",
+                btn_gun_kildim: "✅ Bir Günlük Kazayı Kıldım (−1 gün)",
+                btn_undo: "↩️ Son İşlemi Geri Al",
+                minus_label: "Azalt",
+                plus_label: "Arttır",
                 sabah: "Sabah Namazı",
                 ogle: "Öğle Namazı",
                 ikindi: "İkindi Namazı",
@@ -339,9 +388,14 @@
                 label_yil: "Year",
                 label_ay: "Month",
                 label_gun: "Day",
-                btn_ekle: "Add / Update Debts",
+                btn_ekle: "Add to Debts",
                 debts_header: "📝 My Qada Debts",
                 btn_reset: "Reset",
+                total_label: "Total Remaining:",
+                btn_gun_kildim: "✅ I Prayed One Day of Qada (−1 day)",
+                btn_undo: "↩️ Undo Last Action",
+                minus_label: "Decrease",
+                plus_label: "Increase",
                 sabah: "Fajr Prayer",
                 ogle: "Dhuhr Prayer",
                 ikindi: "Asr Prayer",
@@ -361,9 +415,14 @@
                 label_yil: "سنة",
                 label_ay: "شهر",
                 label_gun: "يوم",
-                btn_ekle: "إضافة / تحديث الديون",
+                btn_ekle: "إضافة إلى الديون",
                 debts_header: "📝 ديوني من الصلوات",
                 btn_reset: "إعادة تعيين",
+                total_label: "إجمالي المتبقي:",
+                btn_gun_kildim: "✅ قضيت صلوات يوم واحد (−1 يوم)",
+                btn_undo: "↩️ تراجع عن آخر إجراء",
+                minus_label: "إنقاص",
+                plus_label: "زيادة",
                 sabah: "صلاة الفجر",
                 ogle: "صلاة الظهر",
                 ikindi: "صلاة العصر",
@@ -378,151 +437,166 @@
             }
         };
 
-        const currentLang = localStorage.getItem('user_lang') || 'tr';
+        const currentLang = translations[localStorage.getItem('user_lang')] ? localStorage.getItem('user_lang') : 'tr';
+        const t = translations[currentLang];
+        const numLocale = { tr: 'tr-TR', en: 'en-US', ar: 'ar-u-nu-latn' }[currentLang];
 
-        // Tema Ayarları
+        // ===================== TEMA =====================
         const themeToggleBtn = document.getElementById('themeToggleBtn');
 
         function updateThemeButton(isLight) {
-            if (themeToggleBtn) {
-                themeToggleBtn.textContent = isLight ? '☀️' : '🌙';
-            }
-        }
-
-        function setTheme(isLight) {
-            if (isLight) {
-                document.documentElement.classList.add('light-mode');
-                document.body.classList.add('light-mode');
-                localStorage.setItem('theme', 'light');
-            } else {
-                document.documentElement.classList.remove('light-mode');
-                document.body.classList.remove('light-mode');
-                localStorage.setItem('theme', 'dark');
-            }
-            updateThemeButton(isLight);
+            if (themeToggleBtn) themeToggleBtn.textContent = isLight ? '☀️' : '🌙';
         }
 
         function toggleTheme() {
-            const isLight = document.documentElement.classList.contains('light-mode');
-            setTheme(!isLight);
+            const isLight = document.documentElement.classList.toggle('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            updateThemeButton(isLight);
         }
 
-        // İlk yükleme tema durumu
-        const savedThemeInitial = localStorage.getItem('theme');
-        const systemPrefersDarkInitial = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const isLightInitial = (savedThemeInitial === 'light') || (!savedThemeInitial && !systemPrefersDarkInitial);
-        
-        if (isLightInitial) {
-            document.documentElement.classList.add('light-mode');
-            document.body.classList.add('light-mode');
-        } else {
-            document.documentElement.classList.remove('light-mode');
-            document.body.classList.remove('light-mode');
-        }
-        updateThemeButton(isLightInitial);
+        updateThemeButton(document.documentElement.classList.contains('light-mode'));
 
-        // Kaza Borçları Mantığı
-        let debts = JSON.parse(localStorage.getItem('kazaBorclari')) || {
-            sabah: 0,
-            ogle: 0,
-            ikindi: 0,
-            aksam: 0,
-            yatsi: 0,
-            vitir: 0
-        };
-
+        // ===================== KAZA BORÇLARI =====================
         const debtKeys = ['sabah', 'ogle', 'ikindi', 'aksam', 'yatsi', 'vitir'];
+        const MAX_DEBT = 1000000;   // saçma/aşırı değerleri önlemek için üst sınır
+
+        function emptyDebts() {
+            const o = {};
+            debtKeys.forEach(k => { o[k] = 0; });
+            return o;
+        }
+
+        // DÜZELTME: Bozuk / eksik / metin olarak kaydedilmiş veri sayfayı bozmasın
+        function loadDebts() {
+            const out = emptyDebts();
+            try {
+                const raw = JSON.parse(localStorage.getItem('kazaBorclari'));
+                if (raw && typeof raw === 'object') {
+                    debtKeys.forEach(k => {
+                        const v = parseInt(raw[k], 10);
+                        out[k] = (isNaN(v) || v < 0) ? 0 : Math.min(v, MAX_DEBT);
+                    });
+                }
+            } catch (e) { /* bozuk kayıt: sıfırdan başla */ }
+            return out;
+        }
+
+        let debts = loadDebts();
+        let undoSnapshot = null;    // son toplu işlemden önceki durum (geri almak için)
+
+        function saveDebts() {
+            try { localStorage.setItem('kazaBorclari', JSON.stringify(debts)); } catch (e) { /* kota dolu olabilir */ }
+        }
+
+        function fmt(n) {
+            return Number(n).toLocaleString(numLocale);
+        }
+
+        function takeSnapshot() {
+            undoSnapshot = Object.assign({}, debts);
+        }
 
         function renderDebts() {
             const listContainer = document.getElementById('debtList');
             if (!listContainer) return;
-            listContainer.innerHTML = '';
 
-            const t = translations[currentLang] || translations['tr'];
-
-            debtKeys.forEach(key => {
-                let name = t[key] || key;
-                listContainer.innerHTML += `
-                    <div class="debt-item">
-                        <div class="debt-info">
-                            <h3>${name}</h3>
-                            <span>${t.kalan_borc}${debts[key]}${t.vakit}</span>
-                        </div>
-                        <div class="debt-actions">
-                            <button class="action-btn minus" onclick="changeDebt('${key}', -1)">-</button>
-                            <input type="number" id="input-${key}" value="${debts[key]}" onchange="updateDirect('${key}', this.value)" inputmode="numeric" pattern="[0-9]*">
-                            <button class="action-btn" onclick="changeDebt('${key}', 1)">+</button>
-                        </div>
+            // DÜZELTME: Her satır için innerHTML += yerine tek seferde çizim
+            listContainer.innerHTML = debtKeys.map(key => `
+                <div class="debt-item">
+                    <div class="debt-info">
+                        <h3>${t[key] || key}</h3>
+                        <span>${t.kalan_borc}${fmt(debts[key])}${t.vakit}</span>
                     </div>
-                `;
-            });
-            localStorage.setItem('kazaBorclari', JSON.stringify(debts));
+                    <div class="debt-actions">
+                        <button class="action-btn minus" aria-label="${t.minus_label}" onclick="changeDebt('${key}', -1)">-</button>
+                        <input type="number" id="input-${key}" value="${debts[key]}" min="0" onchange="updateDirect('${key}', this.value)" inputmode="numeric" pattern="[0-9]*" aria-label="${t[key] || key}">
+                        <button class="action-btn" aria-label="${t.plus_label}" onclick="changeDebt('${key}', 1)">+</button>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = debtKeys.reduce((sum, k) => sum + debts[k], 0);
+            document.getElementById('totalValue').textContent = fmt(total) + t.vakit;
+            document.getElementById('undoBtn').style.display = undoSnapshot ? 'block' : 'none';
         }
 
         function changeDebt(key, amount) {
-            debts[key] = Math.max(0, debts[key] + amount);
+            debts[key] = Math.min(MAX_DEBT, Math.max(0, debts[key] + amount));
+            saveDebts();
             renderDebts();
         }
 
         function updateDirect(key, value) {
-            let val = parseInt(value);
-            debts[key] = isNaN(val) || val < 0 ? 0 : val;
+            const val = parseInt(value, 10);
+            debts[key] = (isNaN(val) || val < 0) ? 0 : Math.min(val, MAX_DEBT);
+            saveDebts();
             renderDebts();
         }
 
         function hesaplaVeEkle() {
-            let yil = parseInt(document.getElementById('calcYil').value) || 0;
-            let ay = parseInt(document.getElementById('calcAy').value) || 0;
-            let gun = parseInt(document.getElementById('calcGun').value) || 0;
+            // DÜZELTME: Eksi değerler 0 kabul edilir (örn. -1 yıl + 400 gün ile hesap bozulmaz)
+            const yil = Math.max(0, parseInt(document.getElementById('calcYil').value, 10) || 0);
+            const ay = Math.max(0, parseInt(document.getElementById('calcAy').value, 10) || 0);
+            const gun = Math.max(0, parseInt(document.getElementById('calcGun').value, 10) || 0);
 
-            let toplamGun = (yil * 365) + (ay * 30) + gun;
-            const t = translations[currentLang] || translations['tr'];
+            const toplamGun = (yil * 365) + (ay * 30) + gun;
 
             if (toplamGun <= 0) {
                 alert(t.alert_gecersiz);
                 return;
             }
 
+            takeSnapshot();
             debtKeys.forEach(key => {
-                debts[key] += toplamGun;
+                debts[key] = Math.min(MAX_DEBT, debts[key] + toplamGun);
             });
 
             document.getElementById('calcYil').value = '';
             document.getElementById('calcAy').value = '';
             document.getElementById('calcGun').value = '';
 
+            saveDebts();
             renderDebts();
-            alert(toplamGun + t.alert_eklendi);
+            alert(fmt(toplamGun) + t.alert_eklendi);
+        }
+
+        // YENİ: Bir günlük kazayı (6 vakit) tek dokunuşla düş
+        function birGunKildim() {
+            const total = debtKeys.reduce((sum, k) => sum + debts[k], 0);
+            if (total <= 0) return;
+            takeSnapshot();
+            debtKeys.forEach(key => { debts[key] = Math.max(0, debts[key] - 1); });
+            saveDebts();
+            renderDebts();
         }
 
         function tumunuSifirla() {
-            const t = translations[currentLang] || translations['tr'];
             if (confirm(t.confirm_sifirla)) {
-                debtKeys.forEach(key => {
-                    debts[key] = 0;
-                });
+                takeSnapshot();
+                debtKeys.forEach(key => { debts[key] = 0; });
+                saveDebts();
                 renderDebts();
             }
         }
 
-        // Sayfa Metinlerini Dile Göre Düzenleme
-        if (translations[currentLang]) {
-            document.querySelectorAll('[data-i18n]').forEach(element => {
-                const key = element.getAttribute('data-i18n');
-                if (translations[currentLang][key]) {
-                    if (element.tagName === 'TITLE') {
-                        document.title = translations[currentLang][key];
-                    } else {
-                        element.textContent = translations[currentLang][key];
-                    }
-                }
-            });
-            if (currentLang === 'ar') {
-                document.documentElement.setAttribute('dir', 'rtl');
-            } else {
-                document.documentElement.setAttribute('dir', 'ltr');
-            }
+        // YENİ: Toplu işlemleri (ekle / bir gün düş / sıfırla) geri al
+        function geriAl() {
+            if (!undoSnapshot) return;
+            debts = Object.assign(emptyDebts(), undoSnapshot);
+            undoSnapshot = null;
+            saveDebts();
+            renderDebts();
         }
+
+        // Sayfa Metinlerini Dile Göre Düzenleme
+        document.querySelectorAll('[data-i18n]').forEach(element => {
+            const key = element.getAttribute('data-i18n');
+            if (t[key]) {
+                if (element.tagName === 'TITLE') document.title = t[key];
+                else element.textContent = t[key];
+            }
+        });
+        document.title = t.page_title;
 
         renderDebts();
     </script>
