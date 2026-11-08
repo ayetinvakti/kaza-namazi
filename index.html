@@ -27,6 +27,8 @@
             if (b) {
                 d.style.setProperty('--bg-color', b);
                 d.style.setProperty('--card-bg', b);
+                // Eksi (-) düğmesi zemini mod rengine değil özel zemine uysun: yazı renginden %16 karıştırılır
+                d.style.setProperty('--btn-minus-bg', 'color-mix(in srgb, var(--text-color) 16%, ' + b + ')');
             }
             // Özel arka plan var, yazı rengi seçilmemişse okunabilir renkleri zeminin açıklığına göre seç
             if (b && !t) {
