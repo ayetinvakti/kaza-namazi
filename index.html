@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+    <script src="https://ayetinvakti.github.io/finish.js?v=5"></script>
     <script src="https://ayetinvakti.github.io/menu.js" defer></script>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
@@ -328,17 +329,17 @@
 </head>
 <body>
 
-    <header>
+    <header class="fin-card">
         <div class="nav-group">
-            <a href="https://ayetinvakti.github.io/" class="back-btn" aria-label="Geri" title="Geri">←</a>
-            <button class="back-btn" data-drawer-toggle aria-label="Menü" aria-controls="avmDrawer" title="Menü">☰</button>
+            <a href="https://ayetinvakti.github.io/" class="back-btn fin-btn" aria-label="Geri" title="Geri">←</a>
+            <button class="back-btn fin-btn" data-drawer-toggle aria-label="Menü" aria-controls="avmDrawer" title="Menü">☰</button>
         </div>
         <h1 data-i18n="header_title">⏳ Kaza Namazı Takibi</h1>
-        <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Tema Değiştir">🌙</button>
+        <button class="theme-btn fin-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Tema Değiştir">🌙</button>
     </header>
 
     <div class="container">
-        <div class="card">
+        <div class="card fin-card">
             <h2 data-i18n="calc_header">📊 Pratik Kaza Hesaplayıcı</h2>
             <div class="calc-grid">
                 <div class="input-group">
@@ -354,10 +355,10 @@
                     <input type="number" id="calcGun" placeholder="0" min="0" inputmode="numeric" pattern="[0-9]*">
                 </div>
             </div>
-            <button class="btn" onclick="hesaplaVeEkle()" data-i18n="btn_ekle">Borçlara Ekle</button>
+            <button class="btn fin-btn" onclick="hesaplaVeEkle()" data-i18n="btn_ekle">Borçlara Ekle</button>
         </div>
 
-        <div class="card">
+        <div class="card fin-card">
             <div class="card-header-row">
                 <h2 data-i18n="debts_header">📝 Kaza Borçlarım</h2>
                 <button class="reset-all-btn" onclick="tumunuSifirla()" data-i18n="btn_reset">Sıfırla</button>
@@ -368,8 +369,8 @@
             </div>
             <div class="debt-list" id="debtList"></div>
             <div class="bulk-actions">
-                <button class="btn" onclick="birGunKildim()" data-i18n="btn_gun_kildim">✅ Bir Günlük Kazayı Kıldım (−1 gün)</button>
-                <button class="btn secondary" id="undoBtn" onclick="geriAl()" style="display: none;" data-i18n="btn_undo">↩️ Son İşlemi Geri Al</button>
+                <button class="btn fin-btn" onclick="birGunKildim()" data-i18n="btn_gun_kildim">✅ Bir Günlük Kazayı Kıldım (−1 gün)</button>
+                <button class="btn secondary fin-btn" id="undoBtn" onclick="geriAl()" style="display: none;" data-i18n="btn_undo">↩️ Son İşlemi Geri Al</button>
             </div>
         </div>
     </div>
@@ -541,9 +542,9 @@
                         <span>${t.kalan_borc}${fmt(debts[key])}${t.vakit}</span>
                     </div>
                     <div class="debt-actions">
-                        <button class="action-btn minus" aria-label="${t.minus_label}" onclick="changeDebt('${key}', -1)">-</button>
+                        <button class="action-btn minus fin-btn" aria-label="${t.minus_label}" onclick="changeDebt('${key}', -1)">-</button>
                         <input type="number" id="input-${key}" value="${debts[key]}" min="0" onchange="updateDirect('${key}', this.value)" inputmode="numeric" pattern="[0-9]*" aria-label="${t[key] || key}">
-                        <button class="action-btn" aria-label="${t.plus_label}" onclick="changeDebt('${key}', 1)">+</button>
+                        <button class="action-btn fin-btn" aria-label="${t.plus_label}" onclick="changeDebt('${key}', 1)">+</button>
                     </div>
                 </div>
             `).join('');
